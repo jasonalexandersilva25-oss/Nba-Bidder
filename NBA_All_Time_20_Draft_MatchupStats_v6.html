@@ -1,0 +1,505 @@
+
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NBA All-Time $20 Draft</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#070b14;color:#f5f7fb;font-family:Arial,Helvetica,sans-serif}
+header{background:#10172a;border-bottom:1px solid #27334d;padding:18px 26px;display:flex;justify-content:space-between;align-items:center}
+h1{margin:0;font-size:25px}
+button{border:0;border-radius:10px;padding:12px 18px;font-weight:800;cursor:pointer}
+#newDraft{background:#27334d;color:white}
+.wrap{max-width:1250px;margin:auto;padding:22px}
+.settings{background:#10182b;border:1px solid #293650;border-radius:16px;padding:20px;margin-bottom:18px}
+.settings h2{margin:0 0 15px;font-size:18px}
+.yeargrid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+label{display:block;color:#929fb7;font-size:12px;font-weight:800;margin-bottom:7px}
+.yearrow{display:flex;gap:10px;align-items:center}
+input[type=range]{width:100%}.yearval{min-width:52px;text-align:center;font-weight:900;font-size:18px}
+.generate{width:100%;margin-top:18px;background:#e63946;color:#fff;font-size:18px;padding:15px}
+.generated{margin:18px 0;background:#111b30;border:1px solid #2c3955;border-radius:16px;min-height:150px;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center}
+.generated .hint{color:#7e8ba4}.playercard{cursor:grab;background:#18243d;border:1px solid #425272;border-radius:12px;padding:14px 20px;min-width:230px}
+.playercard:active{cursor:grabbing}.playername{font-size:22px;font-weight:900}.playerinfo{color:#9eabc1;margin-top:5px;font-size:13px}
+.boards{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.team{background:#10182b;border:2px solid #293650;border-radius:17px;padding:17px;transition:.15s}
+.team.active{border-color:#e63946;box-shadow:0 0 0 2px rgba(230,57,70,.12)}
+.teamhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.teamname{font-size:22px;font-weight:900}.turn{display:none;background:#e63946;color:#fff;border-radius:8px;padding:6px 9px;font-size:11px;font-weight:900}
+.team.active .turn{display:block}
+.slots{display:grid;grid-template-columns:repeat(5,1fr);gap:9px}
+.slot{min-height:110px;background:#080e1b;border:1px dashed #3a4761;border-radius:11px;padding:9px;text-align:center;display:flex;flex-direction:column}
+.slot.dragover{border:2px solid #e63946;background:#151d30}
+.pos{font-size:11px;color:#8290aa;font-weight:900;margin-bottom:7px}
+.slot .empty{margin:auto;color:#536079;font-size:12px}
+.slot .playercard{min-width:0;width:100%;padding:8px 5px;margin:auto;background:#18243d}
+.slot .playername{font-size:12px}.slot .playerinfo{font-size:10px}
+.log{margin-top:18px;background:#10182b;border:1px solid #293650;border-radius:16px;padding:17px}
+.log h2{margin:0 0 10px;font-size:17px}.logline{color:#aab5c8;padding:6px 0;border-bottom:1px solid #202b42;font-size:13px}
+.note{color:#78869f;font-size:12px;margin-top:12px}
+@media(max-width:900px){.boards,.yeargrid{grid-template-columns:1fr}.slots{grid-template-columns:repeat(2,1fr)}}
+
+.auctionbox{background:#151f35;border:1px solid #3a4967;border-radius:14px;padding:15px;margin-top:12px;width:min(620px,92%);text-align:center}
+.auctiontop{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.budget{font-size:14px;color:#a9b5c9}.budget b{color:#fff;font-size:19px}
+.bidnow{font-size:30px;font-weight:900;margin:8px 0}
+.auctionturn{color:#e63946;font-weight:900;font-size:12px;letter-spacing:.5px}
+.bidcontrols{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.bidcontrols button{background:#edf2fa;color:#08101d}
+.bidinput{width:150px;border:2px solid #425272;border-radius:10px;padding:11px 12px;background:#080e1b;color:#fff;font-size:17px;font-weight:900;text-align:center}
+.bidinput:focus{outline:none;border-color:#e63946}
+.bidcontrols .pass{background:#2b3853;color:#fff}
+.bidcontrols .win{background:#e63946;color:#fff}
+.auctionmsg{font-size:12px;color:#8492ab;margin-top:8px}
+
+.endgame{margin:18px 0;background:#10182b;border:1px solid #293650;border-radius:16px;padding:17px;text-align:center}
+#whoWins{display:none;background:#e63946;color:#fff;font-size:20px;padding:15px 28px;margin:4px auto 0}
+.results{margin-top:16px;text-align:left}
+.resultgrid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.resultteam{background:#0b1222;border:1px solid #2d3a55;border-radius:14px;padding:15px}
+.resultteam.winner{border-color:#e63946;box-shadow:0 0 0 2px rgba(230,57,70,.12)}
+.resultteam h3{margin:0 0 10px;font-size:20px}
+.scoreline{display:flex;justify-content:space-between;gap:12px;padding:7px 0 3px;border-bottom:0;font-size:13px}
+.boxstats{color:#91a0ba;font-size:11px;padding:0 0 7px;border-bottom:1px solid #202b42;text-align:right}
+.scoretotals{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+.scorebox{background:#151f35;border-radius:10px;padding:10px;text-align:center}
+.scorebox b{display:block;font-size:22px;margin-top:3px}
+.winnerbanner{margin-top:16px;background:#e63946;color:#fff;border-radius:12px;padding:13px;font-size:19px;font-weight:900;text-align:center}
+.method{color:#8d9ab1;font-size:11px;margin-top:10px;line-height:1.45}
+@media(max-width:900px){.resultgrid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header><h1>NBA All-Time $20 Draft</h1><button id="newDraft">NEW DRAFT</button></header>
+<div class="wrap">
+
+<section class="settings">
+<h2>Draft Years</h2>
+<div class="yeargrid">
+<div><label>FROM</label><div class="yearrow"><input id="from" type="range" min="1960" max="2025" value="1984"><div class="yearval" id="fromVal">1984</div></div></div>
+<div><label>TO</label><div class="yearrow"><input id="to" type="range" min="1960" max="2025" value="2025"><div class="yearval" id="toVal">2025</div></div></div>
+</div>
+<button class="generate" id="generate">GENERATE RANDOM PLAYER</button>
+<div class="note">The generated player goes into the active player's available roster pool. Drag that player into PG, SG, SF, PF, or C. Positions are completely adjustable.</div>
+</section>
+
+<section class="generated" id="generated">
+<div class="hint">Click GENERATE RANDOM PLAYER to begin.</div>
+</section>
+
+<section class="boards">
+<div class="team active" id="team0">
+ <div class="teamhead"><div class="teamname">PLAYER 1</div><div class="turn">PLAYER'S TURN</div></div>
+ <div class="slots" id="slots0"></div>
+</div>
+<div class="team" id="team1">
+ <div class="teamhead"><div class="teamname">PLAYER 2</div><div class="turn">PLAYER'S TURN</div></div>
+ <div class="slots" id="slots1"></div>
+</div>
+</section>
+
+
+<section class="endgame" id="endgame">
+  <button id="whoWins">WHO WINS?</button>
+  <div id="results" class="results"></div>
+</section>
+
+<section class="log"><h2>Draft History</h2><div id="log"></div></section>
+</div>
+
+<script>
+const players=[
+["Kareem Abdul-Jabbar","C",1969,1989],["Julius Erving","SF",1971,1987],["Larry Bird","SF",1979,1992],["Magic Johnson","PG",1979,1991],["Moses Malone","C",1974,1995],["Robert Parish","C",1976,1997],["Walt Frazier","PG",1967,1980],["George Gervin","SG",1972,1986],["Adrian Dantley","SF",1976,1991],["Bob McAdoo","PF",1972,1986],["David Thompson","SG",1975,1984],["Artis Gilmore","C",1971,1989],["Elvin Hayes","PF",1968,1984],["John Havlicek","SF",1962,1978],["Jerry West","PG",1960,1974],["Oscar Robertson","PG",1960,1974],["Bill Russell","C",1956,1969],["Wilt Chamberlain","C",1959,1973],["Elgin Baylor","SF",1958,1972],["Bob Pettit","PF",1954,1965],
+["Michael Jordan","SG",1984,2003],["Hakeem Olajuwon","C",1984,2002],["Charles Barkley","PF",1984,2000],["John Stockton","PG",1984,2003],["Karl Malone","PF",1985,2004],["Patrick Ewing","C",1985,2002],["Clyde Drexler","SG",1983,1998],["Isiah Thomas","PG",1981,1994],["Dominique Wilkins","SF",1982,1999],["David Robinson","C",1989,2003],["Scottie Pippen","SF",1987,2004],["Dennis Rodman","PF",1986,2000],["Reggie Miller","SG",1987,2005],["Gary Payton","PG",1990,2007],["Dikembe Mutombo","C",1991,2009],["Kevin Johnson","PG",1987,2000],["Chris Mullin","SF",1985,2001],["James Worthy","SF",1982,1994],["Alonzo Mourning","C",1992,2009],["Grant Hill","SF",1994,2013],
+["Shaquille O'Neal","C",1992,2011],["Kobe Bryant","SG",1996,2016],["Tim Duncan","PF",1997,2016],["Kevin Garnett","PF",1995,2016],["Allen Iverson","PG",1996,2010],["Steve Nash","PG",1996,2015],["Dirk Nowitzki","PF",1998,2019],["Dwyane Wade","SG",2003,2019],["Paul Pierce","SF",1998,2017],["Jason Kidd","PG",1994,2013],["Vince Carter","SG",1998,2020],["Tracy McGrady","SG",1997,2013],["Yao Ming","C",2002,2011],["Ben Wallace","C",1996,2012],["Ray Allen","SG",1996,2014],["Carmelo Anthony","SF",2003,2022],["Dwight Howard","C",2004,2022],["Chris Webber","PF",1993,2008],["Pau Gasol","PF",2001,2019],["Tony Parker","PG",2001,2019],["Manu Ginobili","SG",2002,2018],["Rasheed Wallace","PF",1995,2013],["Amare Stoudemire","PF",2002,2016],["Chauncey Billups","PG",1997,2014],["Chris Bosh","PF",2003,2016],["Baron Davis","PG",1999,2012],["Peja Stojakovic","SF",1998,2011],["Shawn Marion","SF",1999,2015],["Jermaine O'Neal","C",1996,2014],
+["LeBron James","SF",2003,2025],["Stephen Curry","PG",2009,2025],["Kevin Durant","SF",2007,2025],["Giannis Antetokounmpo","PF",2013,2025],["Nikola Jokic","C",2015,2025],["James Harden","SG",2009,2025],["Russell Westbrook","PG",2008,2025],["Kawhi Leonard","SF",2011,2025],["Anthony Davis","PF",2012,2025],["Chris Paul","PG",2005,2025],["Damian Lillard","PG",2012,2025],["Jimmy Butler","SF",2011,2025],["Paul George","SF",2010,2025],["Klay Thompson","SG",2011,2025],["Draymond Green","PF",2012,2025],["Kyrie Irving","PG",2011,2025],["DeMar DeRozan","SG",2009,2025],["Kyle Lowry","PG",2006,2025],["Al Horford","C",2007,2025],["Kevin Love","PF",2008,2025],["Rajon Rondo","PG",2006,2022],["Marc Gasol","C",2008,2021],["LaMarcus Aldridge","PF",2006,2022],["Andre Iguodala","SF",2004,2023],["Blake Griffin","PF",2010,2021],["John Wall","PG",2010,2023],["DeAndre Jordan","C",2008,2025],["Isaiah Thomas","PG",2011,2025],["Kemba Walker","PG",2011,2023],
+["Luka Doncic","PG",2018,2025],["Joel Embiid","C",2014,2025],["Jayson Tatum","SF",2017,2025],["Shai Gilgeous-Alexander","PG",2018,2025],["Anthony Edwards","SG",2020,2025],["Victor Wembanyama","C",2023,2025],["Jalen Brunson","PG",2018,2025],["Donovan Mitchell","SG",2017,2025],["Devin Booker","SG",2015,2025],["Jaylen Brown","SF",2016,2025],["Bam Adebayo","C",2017,2025],["Domantas Sabonis","C",2016,2025],["Karl-Anthony Towns","C",2015,2025],["Trae Young","PG",2018,2025],["Ja Morant","PG",2019,2025],["Tyrese Haliburton","PG",2020,2025],["Tyrese Maxey","SG",2020,2025],["Jalen Williams","SF",2022,2025],["Paolo Banchero","PF",2022,2025],["Chet Holmgren","C",2023,2025],["Scottie Barnes","SF",2021,2025],["LaMelo Ball","PG",2020,2025],["Cade Cunningham","PG",2021,2025],["Evan Mobley","C",2021,2025],["Franz Wagner","SF",2021,2025],["Desmond Bane","SG",2020,2025],["De'Aaron Fox","PG",2017,2025],["Brandon Ingram","SF",2016,2025],["Zion Williamson","PF",2019,2025],["Tyrese Haliburton","PG",2020,2025]
+];
+
+const positions=["PG","SG","SF","PF","C"];
+
+// Legacy offline impact index retained only as a fallback estimator when verified five-season on/off data is unavailable.
+// It no longer represents the displayed unit of measurement.
+const impactRatings={
+"Kareem Abdul-Jabbar":[9.8,9.0],"Julius Erving":[9.4,8.0],"Larry Bird":[9.9,7.8],"Magic Johnson":[10.0,7.2],"Moses Malone":[9.2,8.3],"Robert Parish":[7.7,8.5],"Walt Frazier":[8.6,9.3],"George Gervin":[9.5,6.2],"Adrian Dantley":[9.3,6.0],"Bob McAdoo":[9.2,6.9],"David Thompson":[9.1,6.6],"Artis Gilmore":[8.5,9.0],"Elvin Hayes":[8.5,8.8],"John Havlicek":[8.9,9.0],"Jerry West":[9.6,8.6],"Oscar Robertson":[9.8,7.7],"Bill Russell":[7.7,10.0],"Wilt Chamberlain":[9.8,9.2],"Elgin Baylor":[9.5,7.1],"Bob Pettit":[9.3,7.4],
+"Michael Jordan":[10.0,9.7],"Hakeem Olajuwon":[9.2,10.0],"Charles Barkley":[9.7,7.1],"John Stockton":[9.4,8.5],"Karl Malone":[9.7,8.2],"Patrick Ewing":[8.7,9.3],"Clyde Drexler":[9.1,8.0],"Isiah Thomas":[9.2,7.4],"Dominique Wilkins":[9.4,6.5],"David Robinson":[9.2,9.9],"Scottie Pippen":[8.7,9.8],"Dennis Rodman":[6.6,9.8],"Reggie Miller":[9.4,6.6],"Gary Payton":[8.8,9.7],"Dikembe Mutombo":[6.8,9.9],"Kevin Johnson":[9.2,6.8],"Chris Mullin":[9.1,6.7],"James Worthy":[8.8,7.3],"Alonzo Mourning":[8.1,9.6],"Grant Hill":[9.0,8.1],
+"Shaquille O'Neal":[9.9,9.3],"Kobe Bryant":[9.8,8.7],"Tim Duncan":[9.3,9.9],"Kevin Garnett":[9.2,9.9],"Allen Iverson":[9.5,6.7],"Steve Nash":[10.0,5.9],"Dirk Nowitzki":[9.8,6.8],"Dwyane Wade":[9.6,8.8],"Paul Pierce":[9.1,7.7],"Jason Kidd":[8.6,9.2],"Vince Carter":[9.1,6.9],"Tracy McGrady":[9.7,7.2],"Yao Ming":[8.8,8.0],"Ben Wallace":[5.8,10.0],"Ray Allen":[9.2,6.9],"Carmelo Anthony":[9.4,6.4],"Dwight Howard":[8.5,9.8],"Chris Webber":[9.0,7.7],"Pau Gasol":[8.8,8.2],"Tony Parker":[8.9,6.5],"Manu Ginobili":[9.0,7.9],"Rasheed Wallace":[8.2,9.0],"Amare Stoudemire":[9.3,6.5],"Chauncey Billups":[9.0,8.2],"Chris Bosh":[8.9,8.1],"Baron Davis":[8.8,7.4],"Peja Stojakovic":[9.1,6.3],"Shawn Marion":[8.4,9.2],"Jermaine O'Neal":[8.3,9.0],
+"LeBron James":[10.0,9.3],"Stephen Curry":[10.0,7.0],"Kevin Durant":[9.9,8.0],"Giannis Antetokounmpo":[9.5,9.8],"Nikola Jokic":[10.0,8.0],"James Harden":[9.9,6.7],"Russell Westbrook":[9.4,7.3],"Kawhi Leonard":[9.5,9.8],"Anthony Davis":[9.0,9.8],"Chris Paul":[9.6,9.0],"Damian Lillard":[9.7,6.4],"Jimmy Butler":[9.0,9.1],"Paul George":[9.0,9.1],"Klay Thompson":[9.0,8.6],"Draymond Green":[7.7,9.8],"Kyrie Irving":[9.4,6.5],"DeMar DeRozan":[9.0,6.2],"Kyle Lowry":[8.5,8.4],"Al Horford":[8.1,9.0],"Kevin Love":[8.8,6.9],"Rajon Rondo":[8.2,8.8],"Marc Gasol":[8.2,9.5],"LaMarcus Aldridge":[8.8,7.2],"Andre Iguodala":[7.9,9.1],"Blake Griffin":[9.0,6.6],"John Wall":[8.9,7.7],"DeAndre Jordan":[7.2,9.1],"Isaiah Thomas":[9.1,5.6],"Kemba Walker":[8.9,6.2],
+"Luka Doncic":[9.9,6.9],"Joel Embiid":[9.6,9.7],"Jayson Tatum":[9.4,9.0],"Shai Gilgeous-Alexander":[9.8,9.0],"Anthony Edwards":[9.3,8.5],"Victor Wembanyama":[9.2,10.0],"Jalen Brunson":[9.4,6.8],"Donovan Mitchell":[9.2,7.0],"Devin Booker":[9.4,7.1],"Jaylen Brown":[8.9,8.7],"Bam Adebayo":[8.3,9.6],"Domantas Sabonis":[8.9,7.0],"Karl-Anthony Towns":[9.2,6.9],"Trae Young":[9.6,5.7],"Ja Morant":[9.2,6.4],"Tyrese Haliburton":[9.3,6.8],"Tyrese Maxey":[9.1,7.0],"Jalen Williams":[8.8,8.8],"Paolo Banchero":[8.8,7.2],"Chet Holmgren":[8.7,9.5],"Scottie Barnes":[8.3,9.0],"LaMelo Ball":[8.8,6.7],"Cade Cunningham":[9.0,7.1],"Evan Mobley":[8.1,9.7],"Franz Wagner":[8.7,8.0],"Desmond Bane":[8.8,7.7],"De'Aaron Fox":[9.1,7.6],"Brandon Ingram":[8.8,6.8],"Zion Williamson":[9.1,6.5]
+};
+
+let state={
+ turn:0, used:[], boards:[{},{}], generated:null, history:[],
+ money:[20,20], auction:null, owner:null
+};
+
+function syncYears(){
+ if(+from.value>+to.value)to.value=from.value;
+ fromVal.textContent=from.value;toVal.textContent=to.value;
+}
+from.oninput=syncYears;to.oninput=syncYears;
+
+function eligible(){
+ const a=+from.value,b=+to.value;
+ return players.map((p,i)=>({p,i})).filter(x=>x.p[2]<=b&&x.p[3]>=a&&!state.used.includes(x.i));
+}
+function remainingSlots(t){
+ return positions.filter(pos=>!state.boards[t][pos]).length;
+}
+function maxSpend(t){
+ return state.money[t];
+}
+function canAfford(t,amount){
+ return amount>=0&&amount<=maxSpend(t);
+}
+function playerCard(p,source){
+ const d=document.createElement("div");d.className="playercard";d.draggable=true;d.dataset.source=source;
+ d.innerHTML=`<div class="playername">${p[0]}</div><div class="playerinfo">${p[1]} · ${p[2]}–${p[3]}</div>`;
+ d.ondragstart=e=>e.dataTransfer.setData("text/plain",source);
+ return d;
+}
+
+function rosterComplete(t){return positions.every(pos=>state.boards[t][pos]);}
+function updateEndgame(){
+ const ready=rosterComplete(0)&&rosterComplete(1)&&!state.generated&&!state.auction;
+ const btn=document.getElementById("whoWins");
+ if(btn)btn.style.display=ready?"inline-block":"none";
+ if(!ready)document.getElementById("results").innerHTML="";
+}
+// Endgame metric: prime-five-season offensive and defensive on/off impact, in points per 100 possessions.
+// Positive offense = team's ORtg improved with player on court.
+// Positive defense = team's DRtg improved (fell) with player on court.
+// `primeOnOff` is reserved for verified five-season averages. Where a verified five-season split is not
+// available in this offline build, the game uses a clearly labeled estimate so historical legends remain playable.
+const primeOnOff={
+  // Verified/curated entries can be added here as: "Player Name": {off: 5.4, def: 2.1, seasons:"2016-20", source:"data"}
+};
+function onOffFor(p){
+ const r=primeOnOff[p[0]];
+ if(r)return {...r, estimated:false};
+ // Historical fallback derived from the former offline impact index. This is NOT presented as measured on/off data.
+ const old=impactRatings[p[0]]||[8,8];
+ return {off:(old[0]-8)*3.0,def:(old[1]-8)*3.0,seasons:"best-5 estimate",estimated:true};
+}
+function estimatedPrimeMPG(p,r){
+ // Estimated average minutes across a player's five-season prime.
+ // Earlier eras generally kept stars on the floor longer; modern eras use deeper rotations.
+ const primeMid=Math.min(p[3],p[2]+6);
+ let base=36.0;
+ if(primeMid<1975)base=41.0;
+ else if(primeMid<1990)base=39.5;
+ else if(primeMid<2005)base=38.5;
+ else if(primeMid<2016)base=37.0;
+ else base=35.5;
+ // Elite two-way/overall impact nudges expected prime minutes upward, capped to realistic star usage.
+ const rawImpact=r.off+r.def;
+ const impactAdj=Math.max(-1.0,Math.min(1.8,rawImpact/8));
+ return Math.max(32,Math.min(43,base+impactAdj));
+}
+function teamImpact(t){
+ const rows=positions.map(pos=>{
+  const p=state.boards[t][pos],r=onOffFor(p);
+  const mpg=estimatedPrimeMPG(p,r);
+  const minuteShare=mpg/48;
+  // Convert the player's per-100 on/off effect into his expected share of a full game.
+  const offGame=r.off*minuteShare;
+  const defGame=r.def*minuteShare;
+  const totalGame=offGame+defGame;
+  return {pos,p,off:r.off,def:r.def,total:r.off+r.def,mpg,offGame,defGame,totalGame,seasons:r.seasons,estimated:r.estimated,best:false};
+ });
+ const best=Math.max(...rows.map(x=>x.totalGame));
+ rows.forEach(x=>x.best=Math.abs(x.totalGame-best)<0.0001);
+ const off=rows.reduce((a,x)=>a+x.offGame,0),def=rows.reduce((a,x)=>a+x.defGame,0);
+ return {rows,off,def,total:off+def,estimated:rows.some(x=>x.estimated)};
+}
+
+const statRoleBoost={
+ "Magic Johnson":{ast:3.2,reb:1.5},"Oscar Robertson":{ast:2.1,reb:1.5},"John Stockton":{ast:3.2,stl:.5},"Steve Nash":{ast:3.0},"Jason Kidd":{ast:2.7,reb:1.3},"Chris Paul":{ast:2.6,stl:.4},"Rajon Rondo":{ast:2.6},"Trae Young":{ast:2.8},"Tyrese Haliburton":{ast:2.4},"Luka Doncic":{ast:2.0,reb:1.6},"Nikola Jokic":{ast:3.1,reb:1.4},"LeBron James":{ast:2.0,reb:1.1},"Larry Bird":{ast:1.2,reb:1.4},
+ "Wilt Chamberlain":{reb:5.0,blk:1.3},"Bill Russell":{reb:4.5,blk:1.5},"Dennis Rodman":{reb:5.2},"Moses Malone":{reb:3.3},"Charles Barkley":{reb:2.4},"Kevin Garnett":{reb:2.0,blk:.5},"Tim Duncan":{reb:1.9,blk:.8},"Hakeem Olajuwon":{reb:1.5,stl:.6,blk:1.2},"David Robinson":{reb:1.4,blk:1.1},"Dikembe Mutombo":{reb:1.3,blk:1.5},"Ben Wallace":{reb:2.0,blk:1.2},"Dwight Howard":{reb:2.2,blk:.8},"Victor Wembanyama":{reb:1.4,blk:1.8},"Anthony Davis":{reb:1.5,blk:1.0},"Shaquille O'Neal":{reb:1.8,blk:.6},
+ "Michael Jordan":{pts:3.0,stl:.5},"Kobe Bryant":{pts:2.0},"Kevin Durant":{pts:2.2},"Stephen Curry":{pts:2.3,ast:.8},"James Harden":{pts:1.6,ast:1.8},"Allen Iverson":{pts:2.2},"George Gervin":{pts:2.0},"Adrian Dantley":{pts:1.7},"Dominique Wilkins":{pts:1.6},"Carmelo Anthony":{pts:1.5},"Joel Embiid":{pts:2.0,reb:1.0},"Shai Gilgeous-Alexander":{pts:2.0,stl:.3},"Jalen Brunson":{pts:1.4}
+};
+function baseBoxStats(row){
+ const pos=row.pos,off=impactRatings[row.p[0]]?.[0]||8,def=impactRatings[row.p[0]]?.[1]||8;
+ const base={
+  PG:{pts:20.5,reb:4.2,ast:7.0,stl:1.3,blk:.3},
+  SG:{pts:22.5,reb:4.8,ast:4.2,stl:1.2,blk:.4},
+  SF:{pts:21.5,reb:6.2,ast:3.8,stl:1.2,blk:.6},
+  PF:{pts:20.0,reb:8.6,ast:3.0,stl:.9,blk:1.0},
+  C:{pts:19.0,reb:10.3,ast:2.6,stl:.8,blk:1.7}
+ }[pos];
+ const m=row.mpg/36;
+ const boost=statRoleBoost[row.p[0]]||{};
+ return {
+  pts:(base.pts+(off-8)*3.2+(boost.pts||0))*m,
+  reb:(base.reb+(pos==='C'||pos==='PF'?(def-8)*.65:(def-8)*.28)+(boost.reb||0))*m,
+  ast:(base.ast+(off-8)*(pos==='PG'?1.05:.42)+(boost.ast||0))*m,
+  stl:Math.max(.2,(base.stl+(def-8)*.22+(boost.stl||0))*m),
+  blk:Math.max(.1,(base.blk+(def-8)*(pos==='C'||pos==='PF'? .38:.12)+(boost.blk||0))*m)
+ };
+}
+function projectMatchupStats(team,opp){
+ const teamOff=team.rows.reduce((a,r)=>a+(impactRatings[r.p[0]]?.[0]||8),0)/5;
+ const oppDef=opp.rows.reduce((a,r)=>a+(impactRatings[r.p[0]]?.[1]||8),0)/5;
+ const oppOff=opp.rows.reduce((a,r)=>a+(impactRatings[r.p[0]]?.[0]||8),0)/5;
+ const teamPlay=team.rows.reduce((a,r)=>a+baseBoxStats(r).ast,0);
+ const teamReb=team.rows.reduce((a,r)=>a+baseBoxStats(r).reb,0);
+ return team.rows.map(r=>{
+  const s=baseBoxStats(r),off=impactRatings[r.p[0]]?.[0]||8;
+  const usageShare=Math.max(.78,Math.min(1.16,1+(off-teamOff)*.055-(teamOff-8)*.035));
+  const defensePressure=Math.max(.80,Math.min(1.12,1-(oppDef-8)*.045));
+  const assistCompetition=Math.max(.80,Math.min(1.12,1-(teamPlay/5-5.5)*.025));
+  const teammateFinish=Math.max(.92,Math.min(1.10,1+(teamOff-8)*.025));
+  const rebCompetition=Math.max(.78,Math.min(1.12,1-(teamReb/5-7.0)*.022));
+  const oppMissFactor=Math.max(.90,Math.min(1.10,1-(oppOff-8)*.025));
+  return {...r,box:{
+   pts:Math.max(4,s.pts*usageShare*defensePressure),
+   reb:Math.max(1,s.reb*rebCompetition*oppMissFactor),
+   ast:Math.max(.5,s.ast*assistCompetition*teammateFinish*defensePressure),
+   stl:Math.max(.2,s.stl*(1+(oppOff-8)*.025)),
+   blk:Math.max(.1,s.blk*(1+(oppOff-8)*.018))
+  }};
+ });
+}
+function calculateWinner(){
+ if(!(rosterComplete(0)&&rosterComplete(1)))return;
+ const a=teamImpact(0),b=teamImpact(1);
+ a.rows=projectMatchupStats(a,b); b.rows=projectMatchupStats(b,a);
+ const winner=Math.abs(a.total-b.total)<0.0001?-1:(a.total>b.total?0:1);
+ const renderTeam=(x,t)=>`<div class="resultteam ${winner===t?'winner':''}"><h3>PLAYER ${t+1}</h3>${x.rows.map(r=>`<div class="scoreline"><span>${r.pos} · ${r.p[0]}${r.best?' *':''}${r.estimated?' †':''}</span><span>${r.mpg.toFixed(1)} MPG · O ${r.offGame>=0?'+':''}${r.offGame.toFixed(1)} · D ${r.defGame>=0?'+':''}${r.defGame.toFixed(1)} · NET ${r.totalGame>=0?'+':''}${r.totalGame.toFixed(1)}</span></div><div class="boxstats">${r.box.pts.toFixed(1)} PPG · ${r.box.reb.toFixed(1)} REB · ${r.box.ast.toFixed(1)} AST · ${r.box.stl.toFixed(1)} STL · ${r.box.blk.toFixed(1)} BLK</div>`).join('')}<div class="scoretotals"><div class="scorebox">MIN-ADJ OFF<b>${x.off>=0?'+':''}${x.off.toFixed(1)}</b></div><div class="scorebox">MIN-ADJ DEF<b>${x.def>=0?'+':''}${x.def.toFixed(1)}</b></div><div class="scorebox">TOTAL IMPACT<b>${x.total>=0?'+':''}${x.total.toFixed(1)}</b></div></div></div>`;
+ const estimateNote=(a.estimated||b.estimated)?'<br><b>† Estimated on/off:</b> this offline file does not yet contain verified five-season offensive/defensive on-off splits for every historical player.':'';
+ document.getElementById("results").innerHTML=`<div class="resultgrid">${renderTeam(a,0)}${renderTeam(b,1)}</div><div class="winnerbanner">${winner<0?'TIE GAME':`PLAYER ${winner+1} WINS`}</div><div class="method"><b>Winner:</b> still determined only by minutes-adjusted Prime-5 offensive + defensive on/off impact. <b>Projected box score:</b> PPG, REB, AST, STL and BLK are matchup estimates for the player's expected prime minutes. The projection starts from position, prime offensive/defensive impact and player role, then adjusts scoring for teammate usage competition and opposing defense; assists for teammate finishing and competing creators; rebounds for teammate rebounding competition and expected opponent misses; and steals/blocks for defensive impact and opponent offensive activity. These box-score projections describe the matchup but do not change the winner. <b>* = best player on that team</b>, based on minutes-adjusted net on/off impact.${estimateNote}</div>`;
+}
+
+function renderBoards(){
+ [0,1].forEach(t=>{
+  const el=document.getElementById("slots"+t);el.innerHTML="";
+  positions.forEach(pos=>{
+   const slot=document.createElement("div");slot.className="slot";slot.dataset.pos=pos;
+   slot.innerHTML=`<div class="pos">${pos}</div>`;
+   if(state.boards[t][pos])slot.appendChild(playerCard(state.boards[t][pos],"board-"+t+"-"+pos));
+   else{const e=document.createElement("div");e.className="empty";e.textContent="DROP HERE";slot.appendChild(e)}
+   slot.ondragover=e=>{e.preventDefault();slot.classList.add("dragover")};
+   slot.ondragleave=()=>slot.classList.remove("dragover");
+   slot.ondrop=e=>{e.preventDefault();slot.classList.remove("dragover");placeDragged(e.dataTransfer.getData("text/plain"),t,pos)};
+   el.appendChild(slot);
+  });
+  const activeBidder=state.auction?state.auction.turn:state.owner;
+  document.getElementById("team"+t).classList.toggle("active",activeBidder===t);
+ });
+ updateEndgame();
+}
+function placeDragged(source,t,pos){
+ if(!state.generated)return;
+ let p=null, origin=null;
+ if(source==="generated"){
+  if(state.auction){alert("Finish the auction before placing this player.");return}
+  if(state.owner===null||t!==state.owner){alert("Only the player who won the auction can add this player to their team.");return}
+  p=state.generated;
+ }
+ else if(source.startsWith("board-")){
+  const parts=source.split("-"),ot=+parts[1],op=parts[2];
+  if(t!==ot){alert("Players cannot be moved to the other team after they are drafted.");return}
+  p=state.boards[ot][op];origin=[ot,op];if(!p)return;
+  delete state.boards[ot][op];
+ }
+ if(!p)return;
+ if(state.boards[t][pos]){
+  const old=state.boards[t][pos];
+  const empty=positions.find(x=>!state.boards[t][x]);
+  if(empty)state.boards[t][empty]=old;
+  else{
+   if(origin)state.boards[origin[0]][origin[1]]=p;
+   renderBoards();return;
+  }
+ }
+ state.boards[t][pos]=p;
+ if(source==="generated"){
+  state.generated=null;
+  state.owner=null;
+  if(state.history.length)state.history[state.history.length-1].placed=`P${t+1} ${pos}`;
+  document.getElementById("generated").innerHTML=(rosterComplete(0)&&rosterComplete(1))?'<div class="hint">Both teams are complete. Click WHO WINS? below.</div>':'<div class="hint">Player placed. Click GENERATE RANDOM PLAYER for the next auction.</div>';
+ }
+ renderBoards();renderHistory();
+}
+function renderHistory(){
+ log.innerHTML=state.history.map((x,i)=>`<div class="logline"><b>${i+1}. ${x.p[0]}</b> — Player ${x.turn+1} started${x.winner!==undefined?` · Won by Player ${x.winner+1} for $${x.price}`:" · bidding"}</div>`).reverse().join("");
+}
+function renderGenerated(){
+ const box=document.getElementById("generated");
+ if(!state.generated){
+  box.innerHTML='<div class="hint">Click GENERATE RANDOM PLAYER to begin.</div>';return;
+ }
+ box.innerHTML="";
+ box.appendChild(playerCard(state.generated,"generated"));
+ const a=state.auction;
+ if(a){
+  const wrap=document.createElement("div");wrap.className="auctionbox";
+  wrap.innerHTML=`
+   <div class="auctiontop">
+    <div class="budget">P1 <b>$${state.money[0]}</b></div>
+    <div class="auctionturn">PLAYER ${a.turn+1}'S TURN</div>
+    <div class="budget">P2 <b>$${state.money[1]}</b></div>
+   </div>
+   <div class="bidnow">$${a.bid}</div>
+   <div class="auctionmsg">${a.bid===0?"Starting bid — choose an amount.":"Current highest bid by Player "+(a.high+1)}</div>
+   <div class="bidcontrols" id="bidcontrols"></div>`;
+  box.appendChild(wrap);
+  const controls=wrap.querySelector("#bidcontrols");
+
+  // Quick bid buttons. On the opening bid these mean $1, $2, or $3 total.
+  // After bidding starts they raise the current bid by $1, $2, or $3.
+  [1,2,3].forEach(n=>{
+   const target=a.bid===0?n:a.bid+n;
+   const b=document.createElement("button");
+   b.textContent=a.bid===0?`BID $${n}`:`RAISE +$${n}`;
+   b.disabled=!canAfford(a.turn,target);
+   b.onclick=()=>quickBid(n);
+   controls.appendChild(b);
+  });
+
+  const input=document.createElement("input");
+  input.type="number";input.className="bidinput";input.id="bidAmount";input.step="1";
+  input.min=a.bid===0?1:a.bid+1;input.max=state.money[a.turn];
+  input.placeholder=`$${input.min}–$${input.max}`;
+  input.disabled=state.money[a.turn]<Number(input.min);
+  controls.appendChild(input);
+
+  const bid=document.createElement("button");
+  bid.textContent=a.bid===0?"PLACE BID":"SUBMIT RAISE";
+  bid.disabled=input.disabled;
+  bid.onclick=()=>submitBid();
+  controls.appendChild(bid);
+  input.onkeydown=e=>{if(e.key==="Enter"&&!bid.disabled)submitBid()};
+
+  // The player who opens the auction must bid at least $1 and cannot pass at $0.
+  if(a.bid>0){
+   const pass=document.createElement("button");pass.className="pass";pass.textContent="PASS / FORFEIT";
+   pass.onclick=()=>passBid();controls.appendChild(pass);
+  }
+ }
+}
+function placeBidAmount(next){
+ if(!state.auction)return;
+ const a=state.auction,t=a.turn;
+ const minimum=a.bid===0?1:a.bid+1;
+ if(!Number.isInteger(next)){alert("Enter a whole-dollar bid.");return}
+ if(next<minimum){alert(a.bid===0?"The opening bid must be at least $1.":`Your bid must be higher than the current $${a.bid} bid.`);return}
+ if(!canAfford(t,next)){alert(`Player ${t+1} only has $${state.money[t]} remaining.`);return}
+ a.bid=next;a.high=t;
+ const other=t===0?1:0;
+ // A player with $0 cannot take another bidding turn. If the opponent
+ // has no money left, the current high bidder wins immediately.
+ if(state.money[other]===0){
+  finishAuction(t);
+  return;
+ }
+ a.turn=other;
+ renderGenerated();renderBoards();
+}
+
+function quickBid(amount){
+ if(!state.auction)return;
+ const a=state.auction;
+ const next=a.bid===0?amount:a.bid+amount;
+ placeBidAmount(next);
+}
+
+function submitBid(){
+ if(!state.auction)return;
+ const input=document.getElementById("bidAmount");
+ placeBidAmount(Number(input.value));
+}
+
+function passBid(){
+ const a=state.auction;
+ if(a.bid===0){
+  alert("The opening bidder must make a bid of at least $1.");
+  return;
+ }
+ if(a.high===null){
+  a.turn=a.turn===0?1:0;renderGenerated();return;
+ }
+ // Once there is a high bid, a pass by the other player ends the auction.
+ if(a.turn!==a.high){finishAuction(a.high);return}
+ // High bidder can pass/stand, giving the other player the chance to raise.
+ const other=a.turn===0?1:0;
+ if(state.money[other]===0){finishAuction(a.high);return}
+ a.turn=other;renderGenerated();
+}
+function finishAuction(winner){
+ const a=state.auction;
+ if(winner===null||a.bid<1)return;
+ state.money[winner]-=a.bid;
+ const p=state.generated;
+ state.history[state.history.length-1].winner=winner;
+ state.history[state.history.length-1].price=a.bid;
+ state.auction=null;
+ state.owner=winner;
+ // Player remains visible and draggable only to the auction winner until placed.
+ document.getElementById("generated").innerHTML="";
+ const box=document.getElementById("generated");
+ box.appendChild(playerCard(p,"generated"));
+ const note=document.createElement("div");note.className="auctionmsg";note.textContent=`Player ${winner+1} won for $${a.bid}. Drag the player to any position on Player ${winner+1}'s board.`;
+ box.appendChild(note);
+ renderBoards();renderHistory();
+}
+generate.onclick=()=>{
+ if(rosterComplete(0)&&rosterComplete(1)){alert("Both teams are complete. Click WHO WINS? to calculate the matchup.");return}
+ if(state.generated){alert("Finish the current auction and place the player before generating another.");return}
+ const pool=eligible();
+ if(!pool.length){generated.innerHTML='<div class="hint">No eligible players remain. Change the year range or start a new draft.</div>';return}
+ const x=pool[Math.floor(Math.random()*pool.length)],p=x.p;
+ state.used.push(x.i);state.generated=p;state.owner=null;
+
+ // If one roster is already full, that team is removed from future auctions.
+ // The generated player automatically belongs to the only team with an open spot.
+ const openTeams=[0,1].filter(t=>!rosterComplete(t));
+ if(openTeams.length===1){
+  const winner=openTeams[0];
+  const forcedPrice=state.money[winner]>0?1:0;
+  if(forcedPrice>0)state.money[winner]-=forcedPrice;
+  state.owner=winner;
+  state.auction=null;
+  state.history.push({p,turn:winner,winner:winner,price:forcedPrice,placed:null});
+  renderGenerated();
+  const box=document.getElementById("generated");
+  const note=document.createElement("div");
+  note.className="auctionmsg";
+  note.textContent=forcedPrice>0
+   ?`Player ${winner+1} is the only team with an open roster spot, so this player is automatically assigned to Player ${winner+1} for $1. Drag the player onto that roster.`
+   :`Player ${winner+1} is the only team with an open roster spot, so this player is automatically assigned to Player ${winner+1}. Drag the player onto that roster.`;
+  box.appendChild(note);
+  renderBoards();renderHistory();
+  return;
+ }
+
+ // If only one player still has money, skip the auction entirely.
+ // That player automatically gets the generated player for the minimum $1 bid.
+ const funded=[0,1].filter(t=>state.money[t]>0);
+ if(funded.length===1){
+  const winner=funded[0];
+  state.auction={turn:winner,high:winner,bid:1};
+  state.history.push({p,turn:winner,winner:undefined,price:undefined,placed:null});
+  finishAuction(winner);
+  return;
+ }
+
+ // Randomly choose who starts the bidding when both players still have money.
+ const starter=Math.random()<0.5?0:1;
+ state.auction={turn:starter,high:null,bid:0};
+ state.history.push({p,turn:starter,winner:undefined,price:undefined,placed:null});
+ renderGenerated();renderBoards();renderHistory();
+};
+document.getElementById("whoWins").onclick=calculateWinner;
+
+newDraft.onclick=()=>{
+ state={turn:0,used:[],boards:[{},{}],generated:null,history:[],money:[20,20],auction:null,owner:null};
+ generated.innerHTML='<div class="hint">Click GENERATE RANDOM PLAYER to start the first auction.</div>';
+ document.getElementById('results').innerHTML='';
+ renderBoards();renderHistory();
+};
+syncYears();renderBoards();renderHistory();
+</script>
+</body>
+</html>
